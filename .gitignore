@@ -1,0 +1,11 @@
+*.iml
+*.ipr
+*.iws
+.idea/
+/build/
+/dist/
+/out/
+/pkg/
+/test/
+/client/client
+/server/server
