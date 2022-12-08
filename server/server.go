@@ -15,10 +15,7 @@ func main() {
 	services.Migrate()
 
 	if *generateTask {
-		newTask := services.GenerateTask(*taskSize)
-		task := newTask.GetBackpackTaskParts()
-		task = services.SaveNewTaskParts(task)
-		fmt.Printf("Generated Task with ID: %d\n", task.ID)
+		services.GenerateTask(*taskSize)
 	}
 	//service, err := services.RegisterService()
 	//services.FailOnError(err, "Error on RegisterService")

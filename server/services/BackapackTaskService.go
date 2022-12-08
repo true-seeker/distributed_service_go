@@ -17,7 +17,7 @@ type BackpackItem struct {
 var maxPrice = 100.0
 var maxWeight = 100.0
 
-func GenerateTask(size int) BackpackTask {
+func GenerateRandomTask(size int) BackpackTask {
 	newTask := BackpackTask{items: nil}
 
 	for i := 0; i < size; i++ {
