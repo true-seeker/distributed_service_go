@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "gRPC/backpackTaskGRPC";
+
+service BackpackTask {
+  rpc Register(User) returns (Response) {}
+}
+
+message User {
+  int32 id = 1;
+  string username = 2;
+  string password = 3;
+}
+
+message Response {
+  int32 code = 1;
+  string message = 2;
+}

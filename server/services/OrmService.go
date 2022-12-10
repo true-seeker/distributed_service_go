@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -28,7 +29,6 @@ type TaskPart struct {
 	Answer float64
 	Items  []BackpackTaskItem `gorm:"foreignKey:TaskPartId"`
 	TaskId uint
-	//Task   Task `gorm:"foreignKey:TaskId;references:ID"`
 }
 
 type BackpackTaskItem struct {
@@ -39,24 +39,25 @@ type BackpackTaskItem struct {
 	TaskPartId uint
 }
 
-type TaskClientSolution struct {
+type TaskUserSolution struct {
 	gorm.Model
 	TaskPartId uint
 	TaskPart   TaskPart `gorm:"foreignKey:TaskPartId;references:ID"`
-	ClientId   uint
-	Client     Client `gorm:"foreignKey:ClientId;references:ID"`
+	UserId     uint
+	User       User `gorm:"foreignKey:UserId;references:ID"`
 }
 
-type Client struct {
+type User struct {
 	gorm.Model
-	username string
+	Username string
+	Password string
 }
 
 func Migrate() {
 	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
 	FailOnError(err, "Failed to connect to DB")
 
-	err = db.AutoMigrate(&Task{}, &TaskPart{}, &BackpackTaskItem{}, &TaskClientSolution{}, &Client{})
+	err = db.AutoMigrate(&Task{}, &TaskPart{}, &BackpackTaskItem{}, &TaskUserSolution{}, &User{})
 	FailOnError(err, "Failed to migrate")
 }
 
@@ -67,4 +68,20 @@ func SaveNewTaskParts(task Task) Task {
 	db.Create(&task)
 
 	return task
+}
+
+func RegisterNewUser(user User) error {
+	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
+	FailOnError(err, "Failed to connect to DB")
+
+	existingUser := new(User)
+
+	db.Where("username = ?", user.Username).First(existingUser)
+	if existingUser.Username == "" {
+		db.Create(&user)
+	} else {
+		return errors.New("user already exists")
+	}
+
+	return nil
 }
