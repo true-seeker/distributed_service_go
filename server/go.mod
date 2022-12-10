@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/hashicorp/consul/api v1.18.0
+	github.com/rabbitmq/amqp091-go v1.5.0
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/ini.v1 v1.67.0
