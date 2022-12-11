@@ -37,7 +37,6 @@ func gRPCRegister(username string, password string) {
 	} else if answer.Code == 400 {
 		fmt.Printf("User with username: %s already exists\n", username)
 	}
-
 }
 
 func GetTask(user User) *backpackTaskGRPC.Task {
@@ -57,4 +56,19 @@ func GetTask(user User) *backpackTaskGRPC.Task {
 		return nil
 	}
 	return task
+}
+
+func SendAnswer(answer *backpackTaskGRPC.TaskAnswer) {
+	conn := getGrpcConnection()
+	client := backpackTaskGRPC.NewBackpackTaskClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	response, err := client.SendAnswer(ctx, answer)
+	FailOnError(err, "Failed To send answer")
+
+	if response.Code == 200 {
+		fmt.Println("Solution submitted")
+	} else {
+
+	}
 }

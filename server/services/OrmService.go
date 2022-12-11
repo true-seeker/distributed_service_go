@@ -90,14 +90,14 @@ func GetUserByUsername(user User) User {
 	return *existingUser
 }
 
-func CheckIfUserAlreadyDidTheTask(user User, part Task) bool {
+func CheckIfUserAlreadyDidTheTask(user User, task Task) bool {
 	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
 	FailOnError(err, "Failed to connect to DB")
 	user = GetUserByUsername(user)
 
 	taskUserSolution := new(TaskUserSolution)
 
-	err = db.Where("user_id = ? AND task_id = ?", user.ID, part.ID).First(taskUserSolution).Error
+	err = db.Where("user_id = ? AND task_id = ?", user.ID, task.ID).First(taskUserSolution).Error
 	return !errors.Is(err, gorm.ErrRecordNotFound)
 }
 
@@ -111,11 +111,11 @@ func GetUser(user User) User {
 	return *existingUser
 }
 
-func GetTaskById(taskId uint) Task {
+func CreateNewTaskUserSolution(solution TaskUserSolution) TaskUserSolution {
 	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
 	FailOnError(err, "Failed to connect to DB")
-	task := new(Task)
 
-	db.Find(&task, taskId)
-	return *task
+	db.Create(&solution)
+
+	return solution
 }

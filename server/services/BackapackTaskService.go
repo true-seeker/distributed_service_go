@@ -4,17 +4,6 @@ import (
 	"math/rand"
 )
 
-type BackpackTask struct {
-	items            []BackpackItem
-	BackpackCapacity uint32
-}
-
-type BackpackItem struct {
-	Id     int
-	weight uint32
-	price  uint32
-}
-
 var maxPrice = 100
 var maxWeight = 100
 var maxBackpackCapacity = 7500

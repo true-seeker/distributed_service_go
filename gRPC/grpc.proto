@@ -5,6 +5,7 @@ option go_package = "gRPC/backpackTaskGRPC";
 service BackpackTask {
   rpc Register(User) returns (Response) {}
   rpc GetTask(User) returns (Task){}
+  rpc SendAnswer(TaskAnswer) returns (Response) {}
 }
 
 message User {
@@ -28,5 +29,10 @@ message Item{
   int32 id = 1;
   uint32 weight = 2;
   uint32 price = 3;
+}
 
+message TaskAnswer{
+  uint32 totalPrice = 1;
+  User user = 2;
+  int32 taskId = 3;
 }

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func SolveBackPackTask(task *backpackTaskGRPC.Task) float64 {
+func SolveBackPackTask(task *backpackTaskGRPC.Task) uint32 {
 	startTime := time.Now()
 	backpackCapacity := task.BackpackCapacity
 	itemsCount := len(task.Items)
@@ -68,5 +68,5 @@ func SolveBackPackTask(task *backpackTaskGRPC.Task) float64 {
 	fmt.Println()
 	fmt.Println("Вес предметов ответа:", ansWeight)
 	fmt.Println("Ценность предметов ответа:", ansPrice)
-	return 0
+	return ansPrice
 }

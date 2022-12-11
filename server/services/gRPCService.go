@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"google.golang.org/grpc"
+	"gorm.io/gorm"
 	"net"
 	"server/backpackTaskGRPC"
 	"sync"
@@ -67,7 +68,6 @@ func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC
 			GenerateTask(DefaultTaskSize)
 			task = GetTaskPartFromQueue()
 		}
-		fmt.Println("task.Id=", task.ID)
 		if CheckIfUserAlreadyDidTheTask(ormUser, *task) {
 			fmt.Println("Already did")
 			PutTaskInQueue(*task, queueConnection{})
@@ -89,4 +89,43 @@ func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC
 		return &grpcTask, nil
 	}
 	return nil, errors.New("no tasks are available")
+}
+
+func (s *backpackTaskServer) SendAnswer(ctx context.Context, answer *backpackTaskGRPC.TaskAnswer) (*backpackTaskGRPC.Response, error) {
+	fmt.Println(answer)
+	user := User{
+		Username: answer.User.Username,
+		Password: answer.User.Password,
+	}
+	if !AuthenticateUser(user) {
+		return &backpackTaskGRPC.Response{
+			Code:    403,
+			Message: "wrong credentials",
+		}, nil
+	}
+	user = GetUserByUsername(user)
+	task := Task{
+		Model: gorm.Model{ID: uint(answer.TaskId)},
+	}
+
+	if CheckIfUserAlreadyDidTheTask(user, task) {
+		return &backpackTaskGRPC.Response{
+			Code:    400,
+			Message: "Current user already did the task",
+		}, nil
+	}
+
+	solution := TaskUserSolution{
+		TaskId: uint(answer.TaskId),
+		UserId: user.ID,
+		Answer: answer.TotalPrice,
+	}
+
+	fmt.Println("solution.TaskId", solution.TaskId)
+	solution = CreateNewTaskUserSolution(solution)
+
+	return &backpackTaskGRPC.Response{
+		Code:    200,
+		Message: "ok",
+	}, nil
 }
