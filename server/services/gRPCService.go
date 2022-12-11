@@ -46,7 +46,7 @@ func (s *backpackTaskServer) Register(ctx context.Context, user *backpackTaskGRP
 	}, nil
 }
 
-func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC.User) (*backpackTaskGRPC.TaskPart, error) {
+func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC.User) (*backpackTaskGRPC.Task, error) {
 	ormUser := User{
 		Username: user.Username,
 		Password: user.Password,
@@ -58,35 +58,31 @@ func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC
 
 	fmt.Println("GetTask", GetMessageCountFromChannel())
 	for i := 0; i < GetMessageCountFromChannel(); i++ {
-		taskPart := GetTaskPartFromQueue()
-		if taskPart == nil {
+		task := GetTaskPartFromQueue()
+		if task == nil {
 			return nil, errors.New("no tasks are available")
 		}
-		task := GetTaskById(taskPart.TaskId)
-		fmt.Println("taskPart.Id=", taskPart.ID)
-		if CheckIfUserAlreadyDidTheTask(ormUser, *taskPart) {
+		fmt.Println("task.Id=", task.ID)
+		if CheckIfUserAlreadyDidTheTask(ormUser, *task) {
 			fmt.Println("Already did")
-			PutTaskPartInQueue(*taskPart, queueConnection{})
+			PutTaskInQueue(*task, queueConnection{})
 			continue
 		}
 		var grpcItems []*backpackTaskGRPC.Item
-
-		for _, item := range taskPart.Items {
+		for _, item := range task.Items {
 			grpcItems = append(grpcItems, &backpackTaskGRPC.Item{
-				Id:      int32(item.ID),
-				Weight:  item.Weight,
-				Price:   item.Price,
-				IsFixed: item.IsFixed,
+				Id:     int32(item.ID),
+				Weight: item.Weight,
+				Price:  item.Price,
 			})
 		}
-		grpcTaskPart := backpackTaskGRPC.TaskPart{
-			Id:               int32(taskPart.ID),
-			TaskId:           int32(taskPart.TaskId),
+		grpcTask := backpackTaskGRPC.Task{
+			Id:               int32(task.ID),
 			Items:            grpcItems,
 			BackpackCapacity: task.BackpackCapacity,
 		}
-		fmt.Println(grpcTaskPart)
-		return &grpcTaskPart, nil
+		fmt.Println(grpcTask)
+		return &grpcTask, nil
 	}
 	return nil, errors.New("no tasks are available")
 }

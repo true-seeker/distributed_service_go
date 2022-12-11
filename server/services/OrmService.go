@@ -21,32 +21,24 @@ var PostgresConnectionString = fmt.Sprintf("host=localhost "+
 type Task struct {
 	gorm.Model
 	Answer           uint32
-	TaskParts        []TaskPart `gorm:"foreignKey:TaskId"`
 	BackpackCapacity uint32
-}
-
-type TaskPart struct {
-	gorm.Model
-	Answer uint32
-	Items  []BackpackTaskItem `gorm:"foreignKey:TaskPartId"`
-	TaskId uint
+	Items            []BackpackTaskItem `gorm:"foreignKey:TaskPartId"`
 }
 
 type BackpackTaskItem struct {
 	gorm.Model
 	Weight     uint32
 	Price      uint32
-	IsFixed    bool
 	TaskPartId uint
 }
 
 type TaskUserSolution struct {
 	gorm.Model
-	TaskPartId uint
-	TaskPart   TaskPart `gorm:"foreignKey:TaskPartId;references:ID"`
-	UserId     uint
-	User       User `gorm:"foreignKey:UserId;references:ID"`
-	Answer     uint32
+	TaskId uint
+	Task   Task `gorm:"foreignKey:TaskId;references:ID"`
+	UserId uint
+	User   User `gorm:"foreignKey:UserId;references:ID"`
+	Answer uint32
 }
 
 type User struct {
@@ -59,7 +51,7 @@ func Migrate() {
 	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
 	FailOnError(err, "Failed to connect to DB")
 
-	err = db.AutoMigrate(&Task{}, &TaskPart{}, &BackpackTaskItem{}, &TaskUserSolution{}, &User{})
+	err = db.AutoMigrate(&Task{}, &BackpackTaskItem{}, &TaskUserSolution{}, &User{})
 	FailOnError(err, "Failed to migrate")
 }
 
@@ -98,14 +90,14 @@ func GetUserByUsername(user User) User {
 	return *existingUser
 }
 
-func CheckIfUserAlreadyDidTheTask(user User, part TaskPart) bool {
+func CheckIfUserAlreadyDidTheTask(user User, part Task) bool {
 	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
 	FailOnError(err, "Failed to connect to DB")
 	user = GetUserByUsername(user)
 
 	taskUserSolution := new(TaskUserSolution)
 
-	err = db.Where("user_id = ? AND task_part_id = ?", user.ID, part.ID).First(taskUserSolution).Error
+	err = db.Where("user_id = ? AND task_id = ?", user.ID, part.ID).First(taskUserSolution).Error
 	return !errors.Is(err, gorm.ErrRecordNotFound)
 }
 

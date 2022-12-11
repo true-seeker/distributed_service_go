@@ -40,7 +40,7 @@ func gRPCRegister(username string, password string) {
 
 }
 
-func GetTask(user User) *backpackTaskGRPC.TaskPart {
+func GetTask(user User) *backpackTaskGRPC.Task {
 	conn := getGrpcConnection()
 	client := backpackTaskGRPC.NewBackpackTaskClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

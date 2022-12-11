@@ -50,37 +50,34 @@ func PutNewTasksInQueue(task Task) {
 	defer qc.channel.Close()
 	defer qc.ctxCancel()
 
-	for _, taskPart := range task.TaskParts {
-		for i := 0; i < TaskIterationCount; i++ {
-			PutTaskPartInQueue(taskPart, qc)
-		}
+	for i := 0; i < TaskIterationCount; i++ {
+		PutTaskInQueue(task, qc)
 	}
 }
 
-func PutTaskPartInQueue(part TaskPart, qc queueConnection) {
+func PutTaskInQueue(task Task, qc queueConnection) {
 	if qc.conn == nil {
-		fmt.Println("qc.conn == nil", part)
 		qc = getQueueConnection()
 		defer qc.conn.Close()
 		defer qc.channel.Close()
 		defer qc.ctxCancel()
 	}
 
-	marshaledPart, _ := json.Marshal(part)
+	marshaledTask, _ := json.Marshal(task)
 	err := qc.channel.PublishWithContext(qc.ctx,
-		"",            // exchange
-		qc.queue.Name, // routing key
-		false,         // mandatory
-		false,         // immediate
+		"",
+		qc.queue.Name,
+		false,
+		false,
 		amqp.Publishing{
-			Body: marshaledPart,
+			Body: marshaledTask,
 		})
 	if err != nil {
 		fmt.Println("Cant requeue message", err)
 	}
 }
 
-func GetTaskPartFromQueue() *TaskPart {
+func GetTaskPartFromQueue() *Task {
 	qc := getQueueConnection()
 	defer qc.conn.Close()
 	defer qc.channel.Close()
@@ -92,11 +89,11 @@ func GetTaskPartFromQueue() *TaskPart {
 	)
 	FailOnError(err, "Failed to register a consumer")
 	if ok {
-		taskPart := TaskPart{}
+		task := Task{}
 
-		err = json.Unmarshal(msg.Body, &taskPart)
-		FailOnError(err, "Failed to unmarshal taskPart")
-		return &taskPart
+		err = json.Unmarshal(msg.Body, &task)
+		FailOnError(err, "Failed to unmarshal task")
+		return &task
 	} else {
 		return nil
 	}
