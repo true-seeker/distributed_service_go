@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"google.golang.org/grpc"
 	"net"
@@ -43,4 +44,47 @@ func (s *backpackTaskServer) Register(ctx context.Context, user *backpackTaskGRP
 		Code:    200,
 		Message: "ok",
 	}, nil
+}
+
+func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC.User) (*backpackTaskGRPC.TaskPart, error) {
+	ormUser := User{
+		Username: user.Username,
+		Password: user.Password,
+	}
+
+	if !AuthenticateUser(ormUser) {
+		return nil, errors.New("wrong credentials")
+	}
+
+	fmt.Println("GetTask", GetMessageCountFromChannel())
+	for i := 0; i < GetMessageCountFromChannel(); i++ {
+		taskPart := GetTaskPartFromQueue()
+		if taskPart == nil {
+			return nil, errors.New("no tasks are available")
+		}
+		fmt.Println("taskPart.Id=", taskPart.ID)
+		if CheckIfUserAlreadyDidTheTask(ormUser, *taskPart) {
+			fmt.Println("Already did")
+			PutTaskPartInQueue(*taskPart, queueConnection{})
+			continue
+		}
+		var grpcItems []*backpackTaskGRPC.Item
+
+		for _, item := range taskPart.Items {
+			grpcItems = append(grpcItems, &backpackTaskGRPC.Item{
+				Id:      int32(item.ID),
+				Weight:  float32(item.Weight),
+				Price:   float32(item.Weight),
+				IsFixed: item.IsFixed,
+			})
+		}
+		grpcTaskPart := backpackTaskGRPC.TaskPart{
+			Id:     int32(taskPart.ID),
+			TaskId: int32(taskPart.TaskId),
+			Items:  grpcItems,
+		}
+		fmt.Println(grpcTaskPart)
+		return &grpcTaskPart, nil
+	}
+	return nil, errors.New("no tasks are available")
 }

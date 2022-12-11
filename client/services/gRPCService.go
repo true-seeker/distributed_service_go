@@ -9,13 +9,17 @@ import (
 	"time"
 )
 
-func gRPCRegister(username string, password string) {
-
+func getGrpcConnection() *grpc.ClientConn {
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%s",
 		GetProperty("gRPC", "server_address"),
 		GetProperty("gRPC", "server_port")),
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	FailOnError(err, "failed to dial")
+	return conn
+}
+
+func gRPCRegister(username string, password string) {
+	conn := getGrpcConnection()
 	client := backpackTaskGRPC.NewBackpackTaskClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -34,4 +38,24 @@ func gRPCRegister(username string, password string) {
 		fmt.Printf("User with username: %s already exists\n", username)
 	}
 
+}
+
+func GetTask(user User) *backpackTaskGRPC.TaskPart {
+	conn := getGrpcConnection()
+	client := backpackTaskGRPC.NewBackpackTaskClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	grpcUser := backpackTaskGRPC.User{
+		Username: user.Username,
+		Password: user.Password,
+	}
+
+	task, err := client.GetTask(ctx, &grpcUser)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	fmt.Println("task", task)
+	return task
 }

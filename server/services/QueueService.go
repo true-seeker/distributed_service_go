@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"time"
 )
@@ -57,8 +58,16 @@ func PutNewTasksInQueue(task Task) {
 }
 
 func PutTaskPartInQueue(part TaskPart, qc queueConnection) {
+	if qc.conn == nil {
+		fmt.Println("qc.conn == nil", part)
+		qc = getQueueConnection()
+		defer qc.conn.Close()
+		defer qc.channel.Close()
+		defer qc.ctxCancel()
+	}
+
 	marshaledPart, _ := json.Marshal(part)
-	qc.channel.PublishWithContext(qc.ctx,
+	err := qc.channel.PublishWithContext(qc.ctx,
 		"",            // exchange
 		qc.queue.Name, // routing key
 		false,         // mandatory
@@ -66,4 +75,39 @@ func PutTaskPartInQueue(part TaskPart, qc queueConnection) {
 		amqp.Publishing{
 			Body: marshaledPart,
 		})
+	if err != nil {
+		fmt.Println("Cant requeue message", err)
+	}
+}
+
+func GetTaskPartFromQueue() *TaskPart {
+	qc := getQueueConnection()
+	defer qc.conn.Close()
+	defer qc.channel.Close()
+	defer qc.ctxCancel()
+
+	msg, ok, err := qc.channel.Get(
+		qc.queue.Name, // queue
+		true,          // auto-ack
+	)
+	FailOnError(err, "Failed to register a consumer")
+	if ok {
+		taskPart := TaskPart{}
+
+		err = json.Unmarshal(msg.Body, &taskPart)
+		FailOnError(err, "Failed to unmarshal taskPart")
+		return &taskPart
+	} else {
+		return nil
+	}
+
+}
+
+func GetMessageCountFromChannel() int {
+	qc := getQueueConnection()
+	defer qc.conn.Close()
+	defer qc.channel.Close()
+	defer qc.ctxCancel()
+
+	return qc.queue.Messages
 }

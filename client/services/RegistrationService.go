@@ -4,6 +4,11 @@ import (
 	"fmt"
 )
 
+type User struct {
+	Username string
+	Password string
+}
+
 func RegisterNewUser() {
 	var username string
 	var password string

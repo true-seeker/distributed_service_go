@@ -85,3 +85,34 @@ func RegisterNewUser(user User) error {
 
 	return nil
 }
+
+func GetUserByUsername(user User) User {
+	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
+	FailOnError(err, "Failed to connect to DB")
+	existingUser := new(User)
+
+	db.Where("username = ?", user.Username).First(existingUser)
+
+	return *existingUser
+}
+
+func CheckIfUserAlreadyDidTheTask(user User, part TaskPart) bool {
+	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
+	FailOnError(err, "Failed to connect to DB")
+	user = GetUserByUsername(user)
+
+	taskUserSolution := new(TaskUserSolution)
+
+	err = db.Where("user_id = ? AND task_part_id = ?", user.ID, part.ID).First(taskUserSolution).Error
+	return !errors.Is(err, gorm.ErrRecordNotFound)
+}
+
+func GetUser(user User) User {
+	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
+	FailOnError(err, "Failed to connect to DB")
+	existingUser := new(User)
+
+	db.Where("username = ? AND password = ?", user.Username, user.Password).First(existingUser)
+
+	return *existingUser
+}
