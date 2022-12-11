@@ -57,10 +57,15 @@ func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC
 	}
 
 	fmt.Println("GetTask", GetMessageCountFromChannel())
+	if GetMessageCountFromChannel() == 0 {
+		GenerateTask(DefaultTaskSize)
+	}
+
 	for i := 0; i < GetMessageCountFromChannel(); i++ {
 		task := GetTaskPartFromQueue()
 		if task == nil {
-			return nil, errors.New("no tasks are available")
+			GenerateTask(DefaultTaskSize)
+			task = GetTaskPartFromQueue()
 		}
 		fmt.Println("task.Id=", task.ID)
 		if CheckIfUserAlreadyDidTheTask(ormUser, *task) {
@@ -81,7 +86,6 @@ func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC
 			Items:            grpcItems,
 			BackpackCapacity: task.BackpackCapacity,
 		}
-		fmt.Println(grpcTask)
 		return &grpcTask, nil
 	}
 	return nil, errors.New("no tasks are available")

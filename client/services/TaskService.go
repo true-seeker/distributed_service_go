@@ -7,6 +7,6 @@ func TaskLoop(user User) {
 			return
 		}
 		SolveBackPackTask(task)
-		return
+		//return
 	}
 }

@@ -3,10 +3,10 @@ package services
 import "fmt"
 
 var TaskIterationCount = 3
+var DefaultTaskSize = 6000
 
 func GenerateTask(taskSize int) {
 	newTask := GenerateRandomTask(taskSize)
-	//task := newTask.GetBackpackTaskParts()
 	task := SaveNewTaskParts(newTask)
 	PutNewTasksInQueue(task)
 

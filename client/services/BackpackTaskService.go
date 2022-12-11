@@ -3,9 +3,11 @@ package services
 import (
 	"client/backpackTaskGRPC"
 	"fmt"
+	"time"
 )
 
 func SolveBackPackTask(task *backpackTaskGRPC.Task) float64 {
+	startTime := time.Now()
 	backpackCapacity := task.BackpackCapacity
 	itemsCount := len(task.Items)
 	F := *new([][]backpackTaskGRPC.Item)
@@ -52,13 +54,14 @@ func SolveBackPackTask(task *backpackTaskGRPC.Task) float64 {
 		totalWeight += i.Weight
 		totalPrice += i.Price
 	}
+	fmt.Println("Время решения:", time.Since(startTime))
 	fmt.Println("Вместимость рюкзака:", backpackCapacity)
-	fmt.Println("Предметы: ", task.Items)
+	//fmt.Println("Предметы: ", task.Items)
 	fmt.Println("Общий вес предметов:", totalWeight)
 	fmt.Println("Общая ценность предметов:", totalPrice)
-	fmt.Print("\nОтвет: ")
+	//fmt.Print("\nОтвет: ")
 	for _, i := range ans {
-		fmt.Printf("id:%d weight:%d price:%d, ", i.Id, i.Weight, i.Price)
+		//fmt.Printf("id:%d weight:%d price:%d, ", i.Id, i.Weight, i.Price)
 		ansWeight += i.Weight
 		ansPrice += i.Price
 	}

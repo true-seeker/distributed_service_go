@@ -12,7 +12,7 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	generateTask := flag.Bool("g", false, "generate new task")
-	taskSize := flag.Int("s", 5, "new task size")
+	taskSize := flag.Int("s", services.DefaultTaskSize, "new task size")
 	flag.Parse()
 	flag.VisitAll(func(f *flag.Flag) {
 		fmt.Printf("%s: %s\n", f.Name, f.Value)

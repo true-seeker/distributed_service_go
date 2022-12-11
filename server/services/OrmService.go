@@ -26,7 +26,7 @@ type Task struct {
 }
 
 type BackpackTaskItem struct {
-	gorm.Model
+	ID         uint `gorm:"primarykey"`
 	Weight     uint32
 	Price      uint32
 	TaskPartId uint
