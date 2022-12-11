@@ -20,21 +20,22 @@ var PostgresConnectionString = fmt.Sprintf("host=localhost "+
 
 type Task struct {
 	gorm.Model
-	Answer    float64
-	TaskParts []TaskPart `gorm:"foreignKey:TaskId"`
+	Answer           uint32
+	TaskParts        []TaskPart `gorm:"foreignKey:TaskId"`
+	BackpackCapacity uint32
 }
 
 type TaskPart struct {
 	gorm.Model
-	Answer float64
+	Answer uint32
 	Items  []BackpackTaskItem `gorm:"foreignKey:TaskPartId"`
 	TaskId uint
 }
 
 type BackpackTaskItem struct {
 	gorm.Model
-	Weight     float64
-	Price      float64
+	Weight     uint32
+	Price      uint32
 	IsFixed    bool
 	TaskPartId uint
 }
@@ -45,6 +46,7 @@ type TaskUserSolution struct {
 	TaskPart   TaskPart `gorm:"foreignKey:TaskPartId;references:ID"`
 	UserId     uint
 	User       User `gorm:"foreignKey:UserId;references:ID"`
+	Answer     uint32
 }
 
 type User struct {
@@ -115,4 +117,13 @@ func GetUser(user User) User {
 	db.Where("username = ? AND password = ?", user.Username, user.Password).First(existingUser)
 
 	return *existingUser
+}
+
+func GetTaskById(taskId uint) Task {
+	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
+	FailOnError(err, "Failed to connect to DB")
+	task := new(Task)
+
+	db.Find(&task, taskId)
+	return *task
 }

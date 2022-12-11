@@ -62,6 +62,7 @@ func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC
 		if taskPart == nil {
 			return nil, errors.New("no tasks are available")
 		}
+		task := GetTaskById(taskPart.TaskId)
 		fmt.Println("taskPart.Id=", taskPart.ID)
 		if CheckIfUserAlreadyDidTheTask(ormUser, *taskPart) {
 			fmt.Println("Already did")
@@ -73,15 +74,16 @@ func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC
 		for _, item := range taskPart.Items {
 			grpcItems = append(grpcItems, &backpackTaskGRPC.Item{
 				Id:      int32(item.ID),
-				Weight:  float32(item.Weight),
-				Price:   float32(item.Weight),
+				Weight:  item.Weight,
+				Price:   item.Price,
 				IsFixed: item.IsFixed,
 			})
 		}
 		grpcTaskPart := backpackTaskGRPC.TaskPart{
-			Id:     int32(taskPart.ID),
-			TaskId: int32(taskPart.TaskId),
-			Items:  grpcItems,
+			Id:               int32(taskPart.ID),
+			TaskId:           int32(taskPart.TaskId),
+			Items:            grpcItems,
+			BackpackCapacity: task.BackpackCapacity,
 		}
 		fmt.Println(grpcTaskPart)
 		return &grpcTaskPart, nil

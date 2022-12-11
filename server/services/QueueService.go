@@ -51,7 +51,7 @@ func PutNewTasksInQueue(task Task) {
 	defer qc.ctxCancel()
 
 	for _, taskPart := range task.TaskParts {
-		for i := 0; i < TASK_ITERATION_COUNT; i++ {
+		for i := 0; i < TaskIterationCount; i++ {
 			PutTaskPartInQueue(taskPart, qc)
 		}
 	}

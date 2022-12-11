@@ -2,7 +2,7 @@ package services
 
 import "fmt"
 
-var TASK_ITERATION_COUNT = 3
+var TaskIterationCount = 3
 
 func GenerateTask(taskSize int) {
 	newTask := GenerateRandomTask(taskSize)

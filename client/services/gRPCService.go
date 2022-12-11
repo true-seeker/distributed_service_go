@@ -56,6 +56,5 @@ func GetTask(user User) *backpackTaskGRPC.TaskPart {
 		fmt.Println(err)
 		return nil
 	}
-	fmt.Println("task", task)
 	return task
 }

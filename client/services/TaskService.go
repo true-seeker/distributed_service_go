@@ -2,8 +2,11 @@ package services
 
 func TaskLoop(user User) {
 	for {
-		if GetTask(user) == nil {
-			break
+		task := GetTask(user)
+		if task == nil {
+			return
 		}
+		SolveBackPackTask(task)
+		return
 	}
 }

@@ -5,26 +5,29 @@ import (
 )
 
 type BackpackTask struct {
-	items []BackpackItem
+	items            []BackpackItem
+	BackpackCapacity uint32
 }
 
 type BackpackItem struct {
 	Id     int
-	weight float64
-	price  float64
+	weight uint32
+	price  uint32
 }
 
-var maxPrice = 100.0
-var maxWeight = 100.0
+var maxPrice = 100
+var maxWeight = 100
+var maxBackpackCapacity = 100
 
 func GenerateRandomTask(size int) BackpackTask {
-	newTask := BackpackTask{items: nil}
+	newTask := BackpackTask{items: nil,
+		BackpackCapacity: uint32(rand.Intn(maxBackpackCapacity))}
 
 	for i := 0; i < size; i++ {
 		newItem := BackpackItem{
 			Id:     i,
-			weight: rand.Float64() * maxWeight,
-			price:  rand.Float64() * maxPrice,
+			weight: uint32(rand.Intn(maxWeight)) + 1,
+			price:  uint32(rand.Intn(maxPrice)),
 		}
 		newTask.items = append(newTask.items, newItem)
 	}
@@ -59,5 +62,6 @@ func (bt BackpackTask) GetBackpackTaskParts() Task {
 		taskParts = append(taskParts, newTaskPart)
 	}
 	newTask.TaskParts = taskParts
+	newTask.BackpackCapacity = bt.BackpackCapacity
 	return newTask
 }

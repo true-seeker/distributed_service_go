@@ -3,10 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math/rand"
 	"server/services"
+	"time"
 )
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	generateTask := flag.Bool("g", false, "generate new task")
 	taskSize := flag.Int("s", 5, "new task size")
 	flag.Parse()
