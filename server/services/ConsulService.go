@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	consul "github.com/hashicorp/consul/api"
+	"os"
 	"strconv"
 	"time"
 )
@@ -29,7 +30,10 @@ func RegisterService() (*Service, error) {
 
 	s.ConsulAgent = c.Agent()
 	ips := GetNetworkAddresses()
-
+	if len(ips) == 0 {
+		fmt.Println("No available interfaces to host the server")
+		os.Exit(0)
+	}
 	isServiceRegistered := false
 	var serviceRegistrationErrors []error
 	for _, ip := range ips {
@@ -59,7 +63,7 @@ func RegisterService() (*Service, error) {
 	}
 
 	if !isServiceRegistered {
-		FailOnError(serviceRegistrationErrors[0], "Error with service register")
+		FailOnError(nil, "Cant register new service")
 	}
 
 	return &s, nil

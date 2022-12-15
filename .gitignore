@@ -12,3 +12,4 @@
 /client/backpackTaskGRPC
 /server/backpackTaskGRPC
 config.ini
+client/cashed_tasks.json

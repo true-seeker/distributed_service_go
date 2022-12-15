@@ -51,11 +51,10 @@ func gRPCRegister(username string, password string) {
 	}
 }
 
-func GetTask(user User) *backpackTaskGRPC.Task {
+func GetTask(user User) (*backpackTaskGRPC.Task, error) {
 	conn, err := getGrpcConnection()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(0) // todo loop
+		return nil, errors.New("cant connect to server")
 	}
 
 	client := backpackTaskGRPC.NewBackpackTaskClient(conn)
@@ -69,17 +68,16 @@ func GetTask(user User) *backpackTaskGRPC.Task {
 
 	task, err := client.GetTask(ctx, &grpcUser)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return nil, errors.New("no available tasks")
 	}
-	return task
+	return task, nil
 }
 
-func SendAnswer(answer *backpackTaskGRPC.TaskAnswer) {
+func SendAnswer(answer *backpackTaskGRPC.TaskAnswer) error {
 	conn, err := getGrpcConnection()
+
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(0) // todo cash
+		return errors.New("cant connect to grpc")
 	}
 
 	client := backpackTaskGRPC.NewBackpackTaskClient(conn)
@@ -90,7 +88,8 @@ func SendAnswer(answer *backpackTaskGRPC.TaskAnswer) {
 
 	if response.Code == 200 {
 		fmt.Println("Solution submitted")
+		return nil
 	} else {
-
+		return errors.New("cant submit task")
 	}
 }

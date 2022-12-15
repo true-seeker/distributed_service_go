@@ -21,7 +21,7 @@ func main() {
 	if *register {
 		services.RegisterNewUser()
 	} else if *username == "" || *password == "" {
-		fmt.Println("Please, provide username and password\n-h for help")
+		fmt.Println("Please, provide username and password\n\n-h for help")
 	} else {
 		services.TaskLoop(services.User{Username: *username, Password: *password})
 	}

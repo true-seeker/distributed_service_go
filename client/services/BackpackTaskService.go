@@ -57,17 +57,14 @@ func SolveBackPackTask(task *backpackTaskGRPC.Task) uint32 {
 	}
 	fmt.Println("Время решения:", time.Since(startTime))
 	fmt.Println("Вместимость рюкзака:", backpackCapacity)
-	//fmt.Println("Предметы: ", task.Items)
 	fmt.Println("Общий вес предметов:", totalWeight)
-	fmt.Println("Общая ценность предметов:", totalPrice)
-	//fmt.Print("\nОтвет: ")
 	for _, i := range ans {
-		//fmt.Printf("id:%d weight:%d price:%d, ", i.Id, i.Weight, i.Price)
 		ansWeight += i.Weight
 		ansPrice += i.Price
 	}
 	fmt.Println()
 	fmt.Println("Вес предметов ответа:", ansWeight)
-	fmt.Println("Ценность предметов ответа:", ansPrice)
+	fmt.Println("Ответ:", ansPrice)
+	fmt.Println("====================")
 	return ansPrice
 }
