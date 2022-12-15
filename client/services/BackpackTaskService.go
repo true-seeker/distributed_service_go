@@ -7,6 +7,7 @@ import (
 )
 
 func SolveBackPackTask(task *backpackTaskGRPC.Task) uint32 {
+	fmt.Printf("Решаем задачу с ID: %d\n", task.Id)
 	startTime := time.Now()
 	backpackCapacity := task.BackpackCapacity
 	itemsCount := len(task.Items)

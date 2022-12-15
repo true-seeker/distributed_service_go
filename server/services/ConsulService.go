@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	consul "github.com/hashicorp/consul/api"
@@ -16,7 +17,7 @@ type Service struct {
 
 func RegisterService() (*Service, error) {
 	s := Service{
-		Name: "hehe",
+		Name: "BackpackServer",
 	}
 
 	c, err := consul.NewClient(&consul.Config{
@@ -32,6 +33,9 @@ func RegisterService() (*Service, error) {
 	isServiceRegistered := false
 	var serviceRegistrationErrors []error
 	for i, ip := range ips {
+		servicePort, err := strconv.Atoi(GetProperty("gRPC", "server_port"))
+		FailOnError(err, "Cant get port from config")
+
 		serviceDef := &consul.AgentServiceRegistration{
 			ID:   fmt.Sprintf("%s_%d", s.Name, i),
 			Name: s.Name,
@@ -39,9 +43,9 @@ func RegisterService() (*Service, error) {
 				"BackpackServer",
 			},
 			Address: ip.String(),
-			Port:    80,
+			Port:    servicePort,
 			Check: &consul.AgentServiceCheck{
-				HTTP:     "https://google.com",
+				HTTP:     fmt.Sprintf("https://%s:%s", ip, GetProperty("Consul", "http_check_port")),
 				Interval: "10s",
 			},
 		}

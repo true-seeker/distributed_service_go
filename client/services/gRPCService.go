@@ -3,23 +3,35 @@ package services
 import (
 	"client/backpackTaskGRPC"
 	"context"
+	"errors"
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"os"
 	"time"
 )
 
-func getGrpcConnection() *grpc.ClientConn {
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%s",
-		GetProperty("gRPC", "server_address"),
-		GetProperty("gRPC", "server_port")),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	FailOnError(err, "failed to dial")
-	return conn
+func getGrpcConnection() (*grpc.ClientConn, error) {
+	for _, AvailableService := range AvailableServices {
+		conn, err := grpc.Dial(fmt.Sprintf("%s:%d",
+			AvailableService.Address,
+			AvailableService.Port),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithBlock(),
+			grpc.WithTimeout(5*time.Second))
+		if err == nil {
+			return conn, nil
+		}
+	}
+	return nil, errors.New("Failed to connect to grpc server. Try again later")
 }
 
 func gRPCRegister(username string, password string) {
-	conn := getGrpcConnection()
+	conn, err := getGrpcConnection()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
 	client := backpackTaskGRPC.NewBackpackTaskClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -40,7 +52,12 @@ func gRPCRegister(username string, password string) {
 }
 
 func GetTask(user User) *backpackTaskGRPC.Task {
-	conn := getGrpcConnection()
+	conn, err := getGrpcConnection()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0) // todo loop
+	}
+
 	client := backpackTaskGRPC.NewBackpackTaskClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -59,7 +76,12 @@ func GetTask(user User) *backpackTaskGRPC.Task {
 }
 
 func SendAnswer(answer *backpackTaskGRPC.TaskAnswer) {
-	conn := getGrpcConnection()
+	conn, err := getGrpcConnection()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0) // todo cash
+	}
+
 	client := backpackTaskGRPC.NewBackpackTaskClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

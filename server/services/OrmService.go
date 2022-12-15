@@ -7,12 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
-var PostgresConnectionString = fmt.Sprintf("host=localhost "+
+var PostgresConnectionString = fmt.Sprintf("host=%s "+
 	"user=%s "+
 	"password=%s "+
 	"dbname=%s "+
 	"port=%s "+
 	"sslmode=disable TimeZone=Asia/Yekaterinburg",
+	GetProperty("DataBase", "address"),
 	GetProperty("DataBase", "user"),
 	GetProperty("DataBase", "password"),
 	GetProperty("DataBase", "dbname"),

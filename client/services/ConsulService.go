@@ -1,10 +1,11 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
 	consul "github.com/hashicorp/consul/api"
 )
+
+var AvailableServices []consul.AgentService
 
 func GetAvailableServices() {
 	c, err := consul.NewClient(&consul.Config{
@@ -17,12 +18,9 @@ func GetAvailableServices() {
 	services, err := c.Agent().Services()
 	FailOnError(err, "Get services error")
 
-	var agentServices []consul.AgentService
-	for _, value := range services {
-		a, _ := json.Marshal(value)
-		fmt.Println(string(a))
-		agentServices = append(agentServices, *value)
-	}
+	AvailableServices = nil
 
-	fmt.Println(agentServices)
+	for _, value := range services {
+		AvailableServices = append(AvailableServices, *value)
+	}
 }

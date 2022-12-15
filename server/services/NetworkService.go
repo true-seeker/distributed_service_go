@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"net"
 )
 
@@ -18,13 +17,11 @@ func GetNetworkAddresses() []net.IP {
 			switch v := a.(type) {
 			case *net.IPAddr:
 				if !v.IP.IsLoopback() {
-					fmt.Printf("%v : %s\n", i.Name, v)
 					ips = append(ips, v.IP)
 				}
 
 			case *net.IPNet:
 				if !v.IP.IsLoopback() && v.IP.To4() != nil {
-					fmt.Printf("%v : %s\n", i.Name, v.IP.To4())
 					ips = append(ips, v.IP)
 				}
 			}

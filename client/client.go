@@ -17,6 +17,7 @@ func main() {
 	})
 	fmt.Println()
 
+	services.GetAvailableServices()
 	if *register {
 		services.RegisterNewUser()
 	} else if *username == "" || *password == "" {
@@ -24,5 +25,4 @@ func main() {
 	} else {
 		services.TaskLoop(services.User{Username: *username, Password: *password})
 	}
-	//services.GetAvailableServices()
 }

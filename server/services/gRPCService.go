@@ -24,7 +24,7 @@ func StartGRPCListener() {
 
 	grpcServer := grpc.NewServer()
 	backpackTaskGRPC.RegisterBackpackTaskServer(grpcServer, &backpackTaskServer{})
-	fmt.Println("Listener started")
+	fmt.Println("gRPC listener started")
 	grpcServer.Serve(lis)
 }
 
