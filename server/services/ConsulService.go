@@ -2,10 +2,10 @@ package services
 
 import (
 	"fmt"
+	"github.com/google/uuid"
+	consul "github.com/hashicorp/consul/api"
 	"strconv"
 	"time"
-
-	consul "github.com/hashicorp/consul/api"
 )
 
 type Service struct {
@@ -32,12 +32,12 @@ func RegisterService() (*Service, error) {
 
 	isServiceRegistered := false
 	var serviceRegistrationErrors []error
-	for i, ip := range ips {
+	for _, ip := range ips {
 		servicePort, err := strconv.Atoi(GetProperty("gRPC", "server_port"))
 		FailOnError(err, "Cant get port from config")
 
 		serviceDef := &consul.AgentServiceRegistration{
-			ID:   fmt.Sprintf("%s_%d", s.Name, i),
+			ID:   uuid.Must(uuid.NewRandom()).String(),
 			Name: s.Name,
 			Tags: []string{
 				"BackpackServer",
@@ -45,7 +45,7 @@ func RegisterService() (*Service, error) {
 			Address: ip.String(),
 			Port:    servicePort,
 			Check: &consul.AgentServiceCheck{
-				HTTP:     fmt.Sprintf("https://%s:%s", ip, GetProperty("Consul", "http_check_port")),
+				HTTP:     fmt.Sprintf("http://%s:%s", ip, GetProperty("Consul", "http_check_port")),
 				Interval: "10s",
 			},
 		}

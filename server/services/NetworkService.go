@@ -21,7 +21,7 @@ func GetNetworkAddresses() []net.IP {
 				}
 
 			case *net.IPNet:
-				if !v.IP.IsLoopback() && v.IP.To4() != nil {
+				if !v.IP.IsLoopback() && !v.IP.IsPrivate() && v.IP.To4() != nil {
 					ips = append(ips, v.IP)
 				}
 			}

@@ -3,6 +3,7 @@ module server
 go 1.19
 
 require (
+	github.com/google/uuid v1.1.2
 	github.com/hashicorp/consul/api v1.18.0
 	github.com/rabbitmq/amqp091-go v1.5.0
 	google.golang.org/grpc v1.51.0
