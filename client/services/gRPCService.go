@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -68,6 +69,10 @@ func GetTask(user User) (*backpackTaskGRPC.Task, error) {
 
 	task, err := client.GetTask(ctx, &grpcUser)
 	if err != nil {
+		if strings.Contains(err.Error(), "wrong credentials") {
+			fmt.Println("Wrong credentials")
+			os.Exit(0)
+		}
 		return nil, errors.New("no available tasks")
 	}
 	return task, nil
@@ -88,6 +93,10 @@ func SendAnswer(answer *backpackTaskGRPC.TaskAnswer) error {
 
 	if response.Code == 200 {
 		fmt.Println("Solution submitted")
+		return nil
+	} else if response.Code == 403 {
+		fmt.Println("Wrong credentials")
+		os.Exit(0)
 		return nil
 	} else {
 		return errors.New("cant submit task")
