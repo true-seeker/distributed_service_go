@@ -16,8 +16,9 @@ func main() {
 	shutdown := make(chan int)
 
 	sigChan := make(chan os.Signal, 1)
+	sigChan2 := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGKILL)
+	signal.Notify(sigChan2, os.Kill, syscall.SIGKILL)
 
 	generateTask := flag.Bool("g", false, "generate new task")
 	taskSize := flag.Int("s", services.DefaultTaskSize, "new task size")
@@ -39,6 +40,7 @@ func main() {
 
 	go func() {
 		<-sigChan
+		<-sigChan2
 		service.DeregisterServices()
 		shutdown <- 1
 	}()
@@ -49,6 +51,9 @@ func main() {
 	select {
 	case <-sigChan:
 		service.DeregisterServices()
+	case <-sigChan2:
+		service.DeregisterServices()
 	}
+
 	<-shutdown
 }
