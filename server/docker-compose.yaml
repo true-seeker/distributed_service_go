@@ -1,0 +1,12 @@
+version: "3"
+services:
+  server:
+    volumes:
+      - ../config.ini:/app/config.ini
+      - ../gRPC:/app/server/gRPC
+    build: .
+    network_mode: host
+    ports:
+      - "3333:3333"
+      - "9876:9876"
+    command: sh init.sh
