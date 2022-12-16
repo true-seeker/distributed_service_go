@@ -5,10 +5,16 @@ import (
 )
 
 func GetNetworkAddresses() []net.IP {
+	var ips []net.IP
+
+	isDocker := GetProperty("Docker", "is_docker")
+	if isDocker == "true" {
+		ips = append(ips, []byte(GetProperty("Docker", "host_ip")))
+		return ips
+	}
+
 	ifaces, err := net.Interfaces()
 	FailOnError(err, "Error on getting net.Interfaces")
-
-	var ips []net.IP
 
 	for _, i := range ifaces {
 		addrs, err := i.Addrs()

@@ -1,6 +1,9 @@
-version: "3.9"
+version: "3"
 services:
   server:
     build: .
     volumes:
       - ./config.ini:/app/config.ini
+    ports:
+      - "3333:3333"
+      - "9876:9876"
