@@ -7,3 +7,5 @@ services:
     ports:
       - "3333:3333"
       - "9876:9876"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
