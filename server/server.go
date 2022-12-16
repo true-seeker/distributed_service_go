@@ -13,10 +13,11 @@ import (
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
+	shutdown := make(chan int)
 
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	signal.Notify(c, os.Interrupt, syscall.SIGKILL)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGKILL)
 
 	generateTask := flag.Bool("g", false, "generate new task")
 	taskSize := flag.Int("s", services.DefaultTaskSize, "new task size")
@@ -36,12 +37,17 @@ func main() {
 		services.GenerateTask(*taskSize)
 	}
 
+	go func() {
+		<-sigChan
+		shutdown <- 1
+	}()
+
 	go services.StartGRPCListener()
 	go services.StartWebServerListener()
 
 	select {
-	case <-c:
+	case <-sigChan:
 		service.DeregisterServices()
 	}
-
+	<-shutdown
 }
