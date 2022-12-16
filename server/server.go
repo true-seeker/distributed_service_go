@@ -39,6 +39,7 @@ func main() {
 
 	go func() {
 		<-sigChan
+		service.DeregisterServices()
 		shutdown <- 1
 	}()
 
