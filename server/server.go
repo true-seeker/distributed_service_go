@@ -16,6 +16,7 @@ func main() {
 
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(c, os.Interrupt, syscall.SIGKILL)
 
 	generateTask := flag.Bool("g", false, "generate new task")
 	taskSize := flag.Int("s", services.DefaultTaskSize, "new task size")
