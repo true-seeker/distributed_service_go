@@ -7,15 +7,6 @@ import (
 func GetNetworkAddresses() []net.IP {
 	var ips []net.IP
 
-	isDocker := GetProperty("Docker", "is_docker")
-	if isDocker == "true" {
-		ip, err := net.ResolveIPAddr("ip", GetProperty("Docker", "host_ip"))
-		FailOnError(err, "Error on parsing host address")
-
-		ips = append(ips, ip.IP)
-		return ips
-	}
-
 	ifaces, err := net.Interfaces()
 	FailOnError(err, "Error on getting net.Interfaces")
 
