@@ -9,7 +9,10 @@ func GetNetworkAddresses() []net.IP {
 
 	isDocker := GetProperty("Docker", "is_docker")
 	if isDocker == "true" {
-		ips = append(ips, []byte(GetProperty("Docker", "host_ip")))
+		ip, _, err := net.ParseCIDR(GetProperty("Docker", "host_ip"))
+		FailOnError(err, "Error on parsing host address")
+
+		ips = append(ips, ip)
 		return ips
 	}
 
