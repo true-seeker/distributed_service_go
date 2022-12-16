@@ -27,6 +27,7 @@ func main() {
 	services.Migrate()
 
 	service, err := services.RegisterService()
+	defer service.DeregisterServices()
 	fmt.Sprintf("Successfully registered Consul service with name %s", service.Name)
 	services.FailOnError(err, "Failed to register consul service")
 
