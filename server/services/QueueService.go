@@ -16,7 +16,7 @@ type queueConnection struct {
 	ctxCancel context.CancelFunc
 }
 
-func getQueueConnection() queueConnection {
+func getQueueConnection() *queueConnection {
 	conn, err := amqp.Dial("amqp://lab2:lab2@176.124.200.41:5672/")
 	FailOnError(err, "Failed to connect to RabbitMQ")
 
@@ -35,7 +35,7 @@ func getQueueConnection() queueConnection {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-	return queueConnection{
+	return &queueConnection{
 		conn:      conn,
 		channel:   ch,
 		queue:     q,
@@ -44,25 +44,13 @@ func getQueueConnection() queueConnection {
 	}
 }
 
-func PutNewTasksInQueue(task Task) {
-	qc := getQueueConnection()
-	defer qc.conn.Close()
-	defer qc.channel.Close()
-	defer qc.ctxCancel()
-
+func (qc *queueConnection) PutNewTasksInQueue(task Task) {
 	for i := 0; i < TaskIterationCount; i++ {
-		PutTaskInQueue(task, qc)
+		qc.PutTaskInQueue(task)
 	}
 }
 
-func PutTaskInQueue(task Task, qc queueConnection) {
-	if qc.conn == nil {
-		qc = getQueueConnection()
-		defer qc.conn.Close()
-		defer qc.channel.Close()
-		defer qc.ctxCancel()
-	}
-
+func (qc *queueConnection) PutTaskInQueue(task Task) {
 	marshaledTask, _ := json.Marshal(task)
 	err := qc.channel.PublishWithContext(qc.ctx,
 		"",
@@ -77,12 +65,7 @@ func PutTaskInQueue(task Task, qc queueConnection) {
 	}
 }
 
-func GetTaskPartFromQueue() *Task {
-	qc := getQueueConnection()
-	defer qc.conn.Close()
-	defer qc.channel.Close()
-	defer qc.ctxCancel()
-
+func (qc *queueConnection) GetTaskPartFromQueue() *Task {
 	msg, ok, err := qc.channel.Get(
 		qc.queue.Name, // queue
 		true,          // auto-ack
@@ -100,11 +83,7 @@ func GetTaskPartFromQueue() *Task {
 
 }
 
-func GetMessageCountFromChannel() int {
-	qc := getQueueConnection()
-	defer qc.conn.Close()
-	defer qc.channel.Close()
-	defer qc.ctxCancel()
+func (qc *queueConnection) GetMessageCountFromChannel() int {
 
 	return qc.queue.Messages
 }

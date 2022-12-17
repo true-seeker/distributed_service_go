@@ -1,6 +1,6 @@
 package services
 
-func AuthenticateUser(user User) bool {
-	existingUser := GetUser(user)
+func (db *OrmConnection) AuthenticateUser(user User) bool {
+	existingUser := db.GetUser(user)
 	return existingUser.Username != ""
 }

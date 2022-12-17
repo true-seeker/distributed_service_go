@@ -48,32 +48,37 @@ type User struct {
 	Password string
 }
 
-func Migrate() {
+type OrmConnection struct {
+	conn gorm.DB
+}
+
+func GetDBConnection() OrmConnection {
 	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
 	FailOnError(err, "Failed to connect to DB")
+	return OrmConnection{conn: *db}
+}
 
-	err = db.AutoMigrate(&Task{}, &BackpackTaskItem{}, &TaskUserSolution{}, &User{})
+func Migrate() {
+	db := GetDBConnection()
+	dbInstance, _ := db.conn.DB()
+	defer dbInstance.Close()
+
+	err := db.conn.AutoMigrate(&Task{}, &BackpackTaskItem{}, &TaskUserSolution{}, &User{})
 	FailOnError(err, "Failed to migrate")
 }
 
-func SaveNewTaskParts(task Task) Task {
-	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
-	FailOnError(err, "Failed to connect to DB")
-
-	db.Create(&task)
+func (db *OrmConnection) SaveNewTaskParts(task Task) Task {
+	db.conn.Create(&task)
 
 	return task
 }
 
-func RegisterNewUser(user User) error {
-	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
-	FailOnError(err, "Failed to connect to DB")
-
+func (db *OrmConnection) RegisterNewUser(user User) error {
 	existingUser := new(User)
 
-	db.Where("username = ?", user.Username).First(existingUser)
+	db.conn.Where("username = ?", user.Username).First(existingUser)
 	if existingUser.Username == "" {
-		db.Create(&user)
+		db.conn.Create(&user)
 	} else {
 		return errors.New("user already exists")
 	}
@@ -81,42 +86,33 @@ func RegisterNewUser(user User) error {
 	return nil
 }
 
-func GetUserByUsername(user User) User {
-	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
-	FailOnError(err, "Failed to connect to DB")
+func (db *OrmConnection) GetUserByUsername(user User) User {
 	existingUser := new(User)
 
-	db.Where("username = ?", user.Username).First(existingUser)
+	db.conn.Where("username = ?", user.Username).First(existingUser)
 
 	return *existingUser
 }
 
-func CheckIfUserAlreadyDidTheTask(user User, task Task) bool {
-	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
-	FailOnError(err, "Failed to connect to DB")
-	user = GetUserByUsername(user)
+func (db *OrmConnection) CheckIfUserAlreadyDidTheTask(user User, task Task) bool {
+	user = db.GetUserByUsername(user)
 
 	taskUserSolution := new(TaskUserSolution)
 
-	err = db.Where("user_id = ? AND task_id = ?", user.ID, task.ID).First(taskUserSolution).Error
+	err := db.conn.Where("user_id = ? AND task_id = ?", user.ID, task.ID).First(taskUserSolution).Error
 	return !errors.Is(err, gorm.ErrRecordNotFound)
 }
 
-func GetUser(user User) User {
-	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
-	FailOnError(err, "Failed to connect to DB")
+func (db *OrmConnection) GetUser(user User) User {
 	existingUser := new(User)
 
-	db.Where("username = ? AND password = ?", user.Username, user.Password).First(existingUser)
+	db.conn.Where("username = ? AND password = ?", user.Username, user.Password).First(existingUser)
 
 	return *existingUser
 }
 
-func CreateNewTaskUserSolution(solution TaskUserSolution) TaskUserSolution {
-	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
-	FailOnError(err, "Failed to connect to DB")
-
-	db.Create(&solution)
+func (db *OrmConnection) CreateNewTaskUserSolution(solution TaskUserSolution) TaskUserSolution {
+	db.conn.Create(&solution)
 
 	return solution
 }

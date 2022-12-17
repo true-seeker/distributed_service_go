@@ -34,7 +34,11 @@ func (s *backpackTaskServer) Register(ctx context.Context, user *backpackTaskGRP
 		Password: user.Password,
 	}
 
-	err := RegisterNewUser(newUser)
+	db := GetDBConnection()
+	dbInstance, _ := db.conn.DB()
+	defer dbInstance.Close()
+
+	err := db.RegisterNewUser(newUser)
 	if err != nil {
 		return &backpackTaskGRPC.Response{
 			Code:    400,
@@ -53,26 +57,35 @@ func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC
 		Password: user.Password,
 	}
 
-	if !AuthenticateUser(ormUser) {
+	db := GetDBConnection()
+	dbInstance, _ := db.conn.DB()
+	defer dbInstance.Close()
+
+	if !db.AuthenticateUser(ormUser) {
 		return nil, errors.New("wrong credentials")
 	}
 
-	fmt.Println("GetTask", GetMessageCountFromChannel())
-	if GetMessageCountFromChannel() == 0 {
+	qc := getQueueConnection()
+	defer qc.conn.Close()
+	defer qc.channel.Close()
+	defer qc.ctxCancel()
+
+	if qc.GetMessageCountFromChannel() == 0 {
 		GenerateTask(DefaultTaskSize)
 	}
 
-	for i := 0; i < GetMessageCountFromChannel(); i++ {
-		task := GetTaskPartFromQueue()
+	for i := 0; i < qc.GetMessageCountFromChannel(); i++ {
+		task := qc.GetTaskPartFromQueue()
 		if task == nil {
 			GenerateTask(DefaultTaskSize)
-			task = GetTaskPartFromQueue()
+			task = qc.GetTaskPartFromQueue()
 		}
-		if CheckIfUserAlreadyDidTheTask(ormUser, *task) {
+		if db.CheckIfUserAlreadyDidTheTask(ormUser, *task) {
 			fmt.Println("Already did")
-			PutTaskInQueue(*task, queueConnection{})
+			qc.PutTaskInQueue(*task)
 			continue
 		}
+
 		var grpcItems []*backpackTaskGRPC.Item
 		for _, item := range task.Items {
 			grpcItems = append(grpcItems, &backpackTaskGRPC.Item{
@@ -92,23 +105,26 @@ func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC
 }
 
 func (s *backpackTaskServer) SendAnswer(ctx context.Context, answer *backpackTaskGRPC.TaskAnswer) (*backpackTaskGRPC.Response, error) {
-	fmt.Println(answer)
 	user := User{
 		Username: answer.User.Username,
 		Password: answer.User.Password,
 	}
-	if !AuthenticateUser(user) {
+	db := GetDBConnection()
+	dbInstance, _ := db.conn.DB()
+	defer dbInstance.Close()
+
+	if !db.AuthenticateUser(user) {
 		return &backpackTaskGRPC.Response{
 			Code:    403,
 			Message: "wrong credentials",
 		}, nil
 	}
-	user = GetUserByUsername(user)
+	user = db.GetUserByUsername(user)
 	task := Task{
 		Model: gorm.Model{ID: uint(answer.TaskId)},
 	}
 
-	if CheckIfUserAlreadyDidTheTask(user, task) {
+	if db.CheckIfUserAlreadyDidTheTask(user, task) {
 		return &backpackTaskGRPC.Response{
 			Code:    400,
 			Message: "Current user already did the task",
@@ -122,7 +138,7 @@ func (s *backpackTaskServer) SendAnswer(ctx context.Context, answer *backpackTas
 	}
 
 	fmt.Println("solution.TaskId", solution.TaskId)
-	solution = CreateNewTaskUserSolution(solution)
+	solution = db.CreateNewTaskUserSolution(solution)
 
 	return &backpackTaskGRPC.Response{
 		Code:    200,

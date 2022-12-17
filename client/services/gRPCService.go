@@ -7,12 +7,17 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
 )
 
 func getGrpcConnection() (*grpc.ClientConn, error) {
+	rand.Shuffle(len(AvailableServices), func(i, j int) {
+		AvailableServices[i], AvailableServices[j] = AvailableServices[j], AvailableServices[i]
+	})
+
 	for _, AvailableService := range AvailableServices {
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d",
 			AvailableService.Address,
