@@ -6,6 +6,7 @@ import (
 	consul "github.com/hashicorp/consul/api"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -34,8 +35,7 @@ func RegisterService() (*Service, error) {
 		fmt.Println("No available interfaces to host the server")
 		os.Exit(0)
 	}
-	isServiceRegistered := false
-	var serviceRegistrationErrors []error
+
 	for _, ip := range ips {
 		servicePort, err := strconv.Atoi(GetProperty("gRPC", "server_port"))
 		FailOnError(err, "Cant get port from config")
@@ -55,14 +55,16 @@ func RegisterService() (*Service, error) {
 		}
 		err = s.ConsulAgent.ServiceRegister(serviceDef)
 		if err == nil {
-			isServiceRegistered = true
 			s.RegisteredServices = append(s.RegisteredServices, *serviceDef)
 		} else {
-			serviceRegistrationErrors = append(serviceRegistrationErrors, err)
+			if strings.Contains(err.Error(), "connection refused") {
+				fmt.Println("Cant connect to Consul. Exiting")
+				os.Exit(0)
+			}
 		}
 	}
 
-	if !isServiceRegistered {
+	if len(s.RegisteredServices) == 0 {
 		FailOnError(nil, "Cant register new service")
 	}
 

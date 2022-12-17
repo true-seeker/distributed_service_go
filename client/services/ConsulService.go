@@ -3,6 +3,8 @@ package services
 import (
 	"fmt"
 	consul "github.com/hashicorp/consul/api"
+	"os"
+	"strings"
 )
 
 var AvailableServices []consul.AgentService
@@ -16,7 +18,10 @@ func GetAvailableServices() {
 	FailOnError(err, "GetAvailableServices consul client creation failed")
 
 	services, err := c.Agent().Services()
-	FailOnError(err, "Get services error")
+	if strings.Contains(err.Error(), "connection refused") {
+		fmt.Println("Cant connect to Consul. Exiting")
+		os.Exit(0)
+	}
 
 	AvailableServices = nil
 

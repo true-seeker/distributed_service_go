@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var PostgresConnectionString = fmt.Sprintf("host=%s "+
@@ -53,7 +54,7 @@ type OrmConnection struct {
 }
 
 func GetDBConnection() OrmConnection {
-	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	FailOnError(err, "Failed to connect to DB")
 	return OrmConnection{conn: *db}
 }
