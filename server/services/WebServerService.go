@@ -7,10 +7,12 @@ import (
 	"strconv"
 )
 
+// healthCheck эндпоинт для проверки работы сервиса консула
 func healthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
 
+// generateTaskView эндпоинт для генерации новой задачи
 func generateTaskView(c *gin.Context) {
 	taskSize, isFound := c.Params.Get("taskSize")
 	if isFound {
@@ -27,6 +29,7 @@ func generateTaskView(c *gin.Context) {
 	return
 }
 
+// StartWebServerListener старт веб сервера
 func StartWebServerListener() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()

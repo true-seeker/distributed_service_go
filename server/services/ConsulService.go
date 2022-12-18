@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	consul "github.com/hashicorp/consul/api"
-	"os"
+	"log"
 	"strconv"
 	"strings"
 	"time"
 )
 
+// Service Консул сервис
 type Service struct {
 	Name               string
 	TTL                time.Duration
@@ -17,7 +18,8 @@ type Service struct {
 	RegisteredServices []consul.AgentServiceRegistration
 }
 
-func RegisterService() (*Service, error) {
+// RegisterService Регистрация сервиса
+func RegisterService() *Service {
 	s := Service{
 		Name: "BackpackServer",
 	}
@@ -30,12 +32,14 @@ func RegisterService() (*Service, error) {
 	FailOnError(err, "RegisterService consul client creation failed")
 
 	s.ConsulAgent = c.Agent()
+
+	//Получаем все IP адреса текущей машины
 	ips := GetNetworkAddresses()
 	if len(ips) == 0 {
-		fmt.Println("No available interfaces to host the server")
-		os.Exit(0)
+		log.Fatalln("No available interfaces to host the server")
 	}
 
+	// Перебираем все возможные адреса и на каждом из них регистрируем консул сервис
 	for _, ip := range ips {
 		servicePort, err := strconv.Atoi(GetProperty("gRPC", "server_port"))
 		FailOnError(err, "Cant get port from config")
@@ -53,28 +57,34 @@ func RegisterService() (*Service, error) {
 				Interval: "10s",
 			},
 		}
+
+		isFirstMessage := true
 		err = s.ConsulAgent.ServiceRegister(serviceDef)
-		if err == nil {
-			s.RegisteredServices = append(s.RegisteredServices, *serviceDef)
-		} else {
+		for err != nil {
 			if strings.Contains(err.Error(), "connection refused") {
-				fmt.Println("Cant connect to Consul. Exiting")
-				os.Exit(0)
+				if isFirstMessage {
+					fmt.Println("Нет подключения к серверу Consul. Переподключаемся")
+					isFirstMessage = false
+				}
+				time.Sleep(5 * time.Second)
+				err = s.ConsulAgent.ServiceRegister(serviceDef)
 			}
 		}
+		s.RegisteredServices = append(s.RegisteredServices, *serviceDef)
 	}
 
 	if len(s.RegisteredServices) == 0 {
 		FailOnError(nil, "Cant register any Consul service. Exiting")
 	}
 
-	return &s, nil
+	return &s
 }
 
+// DeregisterServices Дерегистрация сервиса Консула
 func (s *Service) DeregisterServices() {
 	for _, serviceDef := range s.RegisteredServices {
 		err := s.ConsulAgent.ServiceDeregister(serviceDef.ID)
 		FailOnError(err, "Error on deregisterService "+serviceDef.ID)
-		fmt.Printf("Service with ID %s deregistered\n", serviceDef.ID)
+		fmt.Printf("Сервис с ID %s дерегистрирован\n", serviceDef.ID)
 	}
 }

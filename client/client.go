@@ -7,22 +7,20 @@ import (
 )
 
 func main() {
-	register := flag.Bool("r", false, "register new account")
-	username := flag.String("u", "", "username")
-	password := flag.String("p", "", "password")
+	register := flag.Bool("r", false, "Зарегистрировать новый аккаунт")
+	username := flag.String("u", "", "Имя пользователя")
+	password := flag.String("p", "", "Пароль")
 	flag.Parse()
 
-	flag.VisitAll(func(f *flag.Flag) {
-		fmt.Printf("%s: %s\n", f.Name, f.Value)
-	})
-	fmt.Println()
-
+	// Получение доступных сервисов
 	services.GetAvailableServices()
+	// Регистрация
 	if *register {
 		services.RegisterNewUser()
 	} else if *username == "" || *password == "" {
-		fmt.Println("Please, provide username and password\n\n-h for help")
+		fmt.Println("Не указан логин или пароль\n\n-h для просмотра справки")
 	} else {
+		// Старт цикла решения задач
 		services.TaskLoop(services.User{Username: *username, Password: *password})
 	}
 }

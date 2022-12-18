@@ -12,6 +12,7 @@ type AnswerDTO struct {
 	TaskId     int32
 }
 
+// SaveSolvedTask сохранение кэшированного ответа
 func SaveSolvedTask(answer *backpackTaskGRPC.TaskAnswer) {
 	file, err := os.Create("cashed_tasks.json")
 	FailOnError(err, "Cant create cash file")
@@ -27,6 +28,7 @@ func SaveSolvedTask(answer *backpackTaskGRPC.TaskAnswer) {
 	FailOnError(err, "Cant write cash file")
 }
 
+// GetCashedAnswer Получение кэшированного ответа
 func GetCashedAnswer() (*backpackTaskGRPC.TaskAnswer, error) {
 	file, err := os.OpenFile("cashed_tasks.json", os.O_RDONLY, os.ModeAppend)
 	if err != nil {

@@ -9,13 +9,14 @@ type User struct {
 	Password string
 }
 
+// RegisterNewUser Регистрация пользователя
 func RegisterNewUser() {
 	var username string
 	var password string
-	fmt.Print("Enter username: ")
+	fmt.Print("Введите имя пользователя: ")
 	fmt.Scan(&username)
 
-	fmt.Print("Enter password: ")
+	fmt.Print("Введите пароль: ")
 	fmt.Scan(&password)
 
 	gRPCRegister(username, password)

@@ -8,6 +8,7 @@ var maxPrice = 100
 var maxWeight = 100
 var maxBackpackCapacity = 7500
 
+// GenerateRandomTask Генерация случайной задачи
 func GenerateRandomTask(size int) Task {
 	newTask := Task{Items: nil,
 		BackpackCapacity: uint32(rand.Intn(maxBackpackCapacity))}

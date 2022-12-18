@@ -20,20 +20,23 @@ var PostgresConnectionString = fmt.Sprintf("host=%s "+
 	GetProperty("DataBase", "dbname"),
 	GetProperty("DataBase", "port"))
 
+// Task сущность - задача
 type Task struct {
 	gorm.Model
 	Answer           uint32
 	BackpackCapacity uint32
-	Items            []BackpackTaskItem `gorm:"foreignKey:TaskPartId"`
+	Items            []BackpackTaskItem `gorm:"foreignKey:TaskId"`
 }
 
+// BackpackTaskItem сущность - предмет
 type BackpackTaskItem struct {
-	ID         uint `gorm:"primarykey"`
-	Weight     uint32
-	Price      uint32
-	TaskPartId uint
+	ID     uint `gorm:"primarykey"`
+	Weight uint32
+	Price  uint32
+	TaskId uint
 }
 
+// TaskUserSolution сущность - ответ пользователя
 type TaskUserSolution struct {
 	gorm.Model
 	TaskId uint
@@ -43,6 +46,7 @@ type TaskUserSolution struct {
 	Answer uint32
 }
 
+// User сущность - пользователь
 type User struct {
 	gorm.Model
 	Username string
@@ -53,12 +57,14 @@ type OrmConnection struct {
 	conn gorm.DB
 }
 
+// GetDBConnection подключение к БД
 func GetDBConnection() OrmConnection {
 	db, err := gorm.Open(postgres.Open(PostgresConnectionString), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	FailOnError(err, "Failed to connect to DB")
 	return OrmConnection{conn: *db}
 }
 
+// Migrate Миграция БД
 func Migrate() {
 	db := GetDBConnection()
 	dbInstance, _ := db.conn.DB()
@@ -68,12 +74,14 @@ func Migrate() {
 	FailOnError(err, "Failed to migrate")
 }
 
-func (db *OrmConnection) SaveNewTaskParts(task Task) Task {
+// SaveNewTask Сохранение новой задачи
+func (db *OrmConnection) SaveNewTask(task Task) Task {
 	db.conn.Create(&task)
 
 	return task
 }
 
+// RegisterNewUser Регистрация нового пользователя
 func (db *OrmConnection) RegisterNewUser(user User) error {
 	existingUser := new(User)
 
@@ -87,6 +95,7 @@ func (db *OrmConnection) RegisterNewUser(user User) error {
 	return nil
 }
 
+// GetUserByUsername Получение пользователя по имени пользователя
 func (db *OrmConnection) GetUserByUsername(user User) User {
 	existingUser := new(User)
 
@@ -95,6 +104,7 @@ func (db *OrmConnection) GetUserByUsername(user User) User {
 	return *existingUser
 }
 
+// CheckIfUserAlreadyDidTheTask Делал ли пользователь эту задачу
 func (db *OrmConnection) CheckIfUserAlreadyDidTheTask(user User, task Task) bool {
 	user = db.GetUserByUsername(user)
 
@@ -104,6 +114,7 @@ func (db *OrmConnection) CheckIfUserAlreadyDidTheTask(user User, task Task) bool
 	return !errors.Is(err, gorm.ErrRecordNotFound)
 }
 
+// GetUser Получение пользователя по логину и паролю
 func (db *OrmConnection) GetUser(user User) User {
 	existingUser := new(User)
 
@@ -112,6 +123,7 @@ func (db *OrmConnection) GetUser(user User) User {
 	return *existingUser
 }
 
+// CreateNewTaskUserSolution Создание нового пользовательского решения задачи
 func (db *OrmConnection) CreateNewTaskUserSolution(solution TaskUserSolution) TaskUserSolution {
 	db.conn.Create(&solution)
 

@@ -16,20 +16,25 @@ type queueConnection struct {
 	ctxCancel context.CancelFunc
 }
 
-func getQueueConnection() *queueConnection {
-	conn, err := amqp.Dial("amqp://lab2:lab2@176.124.200.41:5672/")
+// GetQueueConnection Подключение к очереди
+func GetQueueConnection() *queueConnection {
+	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/",
+		GetProperty("Queue", "user"),
+		GetProperty("Queue", "password"),
+		GetProperty("Queue", "address"),
+		GetProperty("Queue", "port")))
 	FailOnError(err, "Failed to connect to RabbitMQ")
 
 	ch, err := conn.Channel()
 	FailOnError(err, "Failed to open a channel")
 
 	q, err := ch.QueueDeclare(
-		"taskParts", // name
-		false,       // durable
-		false,       // delete when unused
-		false,       // exclusive
-		false,       // no-wait
-		nil,         // arguments
+		"tasks", // name
+		false,   // durable
+		false,   // delete when unused
+		false,   // exclusive
+		false,   // no-wait
+		nil,     // arguments
 	)
 	FailOnError(err, "Failed to declare a queue")
 
@@ -44,12 +49,15 @@ func getQueueConnection() *queueConnection {
 	}
 }
 
+// PutNewTasksInQueue Сложить новую задачу в очередь
 func (qc *queueConnection) PutNewTasksInQueue(task Task) {
+	// Кладем одну и ту же задачу TaskIterationCount раз
 	for i := 0; i < TaskIterationCount; i++ {
 		qc.PutTaskInQueue(task)
 	}
 }
 
+// PutTaskInQueue Сложить задачу в очередь
 func (qc *queueConnection) PutTaskInQueue(task Task) {
 	marshaledTask, _ := json.Marshal(task)
 	err := qc.channel.PublishWithContext(qc.ctx,
@@ -61,11 +69,12 @@ func (qc *queueConnection) PutTaskInQueue(task Task) {
 			Body: marshaledTask,
 		})
 	if err != nil {
-		fmt.Println("Cant requeue message", err)
+		fmt.Println("Cant put task in queue", err)
 	}
 }
 
-func (qc *queueConnection) GetTaskPartFromQueue() *Task {
+// GetTaskFromQueue получить задачу из очереди
+func (qc *queueConnection) GetTaskFromQueue() *Task {
 	msg, ok, err := qc.channel.Get(
 		qc.queue.Name, // queue
 		true,          // auto-ack
@@ -83,7 +92,7 @@ func (qc *queueConnection) GetTaskPartFromQueue() *Task {
 
 }
 
+// GetMessageCountFromChannel Получить количество сообщений в очереди
 func (qc *queueConnection) GetMessageCountFromChannel() int {
-
 	return qc.queue.Messages
 }

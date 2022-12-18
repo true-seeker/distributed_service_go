@@ -3,12 +3,13 @@ package services
 import (
 	"fmt"
 	consul "github.com/hashicorp/consul/api"
-	"os"
 	"strings"
+	"time"
 )
 
 var AvailableServices []consul.AgentService
 
+// GetAvailableServices Получение доступных сервисов из консула
 func GetAvailableServices() {
 	c, err := consul.NewClient(&consul.Config{
 		Address: fmt.Sprintf("%s:%s",
@@ -17,10 +18,18 @@ func GetAvailableServices() {
 	})
 	FailOnError(err, "GetAvailableServices consul client creation failed")
 
+	isFirstMessage := true
+
 	services, err := c.Agent().Services()
-	if strings.Contains(err.Error(), "connection refused") {
-		fmt.Println("Cant connect to Consul. Exiting")
-		os.Exit(0)
+	for err != nil {
+		if strings.Contains(err.Error(), "connection refused") {
+			if isFirstMessage {
+				fmt.Println("Нет подключения к серверу Consul. Переподключаемся")
+				isFirstMessage = false
+			}
+			services, err = c.Agent().Services()
+			time.Sleep(5 * time.Second)
+		}
 	}
 
 	AvailableServices = nil

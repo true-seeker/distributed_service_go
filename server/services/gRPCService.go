@@ -16,18 +16,22 @@ type backpackTaskServer struct {
 	mu sync.Mutex
 }
 
+// StartGRPCListener Старт gRPC сервера
 func StartGRPCListener() {
 	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s",
 		GetProperty("gRPC", "server_port")))
 
-	FailOnError(err, "failed to listen")
+	FailOnError(err, "failed to listen gRPC")
 
 	grpcServer := grpc.NewServer()
 	backpackTaskGRPC.RegisterBackpackTaskServer(grpcServer, &backpackTaskServer{})
 	fmt.Println("gRPC listener started")
-	grpcServer.Serve(lis)
+	err = grpcServer.Serve(lis)
+	FailOnError(err, "failed to start gRPC listener")
+
 }
 
+// Register gRPC метод - регистрация пользователя
 func (s *backpackTaskServer) Register(ctx context.Context, user *backpackTaskGRPC.User) (*backpackTaskGRPC.Response, error) {
 	newUser := User{
 		Username: user.Username,
@@ -51,6 +55,7 @@ func (s *backpackTaskServer) Register(ctx context.Context, user *backpackTaskGRP
 	}, nil
 }
 
+// GetTask gRPC метод - получение новой задачи
 func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC.User) (*backpackTaskGRPC.Task, error) {
 	ormUser := User{
 		Username: user.Username,
@@ -65,23 +70,25 @@ func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC
 		return nil, errors.New("wrong credentials")
 	}
 
-	qc := getQueueConnection()
+	qc := GetQueueConnection()
 	defer qc.conn.Close()
 	defer qc.channel.Close()
 	defer qc.ctxCancel()
 
+	// Если сообщений в очереди нет, то сгенерируем новую задачу
 	if qc.GetMessageCountFromChannel() == 0 {
 		GenerateTask(DefaultTaskSize)
 	}
 
 	for i := 0; i < qc.GetMessageCountFromChannel(); i++ {
-		task := qc.GetTaskPartFromQueue()
+		// Получение задачи из очереди
+		task := qc.GetTaskFromQueue()
 		if task == nil {
 			GenerateTask(DefaultTaskSize)
-			task = qc.GetTaskPartFromQueue()
+			task = qc.GetTaskFromQueue()
 		}
+		// Если эту задачу пользователь уже делал
 		if db.CheckIfUserAlreadyDidTheTask(ormUser, *task) {
-			fmt.Println("Already did")
 			qc.PutTaskInQueue(*task)
 			continue
 		}
@@ -104,6 +111,7 @@ func (s *backpackTaskServer) GetTask(ctx context.Context, user *backpackTaskGRPC
 	return nil, errors.New("no tasks are available")
 }
 
+// SendAnswer Отправить ответ на задачу
 func (s *backpackTaskServer) SendAnswer(ctx context.Context, answer *backpackTaskGRPC.TaskAnswer) (*backpackTaskGRPC.Response, error) {
 	user := User{
 		Username: answer.User.Username,

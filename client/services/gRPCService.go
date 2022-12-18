@@ -7,13 +7,24 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"log"
 	"math/rand"
-	"os"
 	"strings"
 	"time"
 )
 
+// getGrpcConnection Подключение к серверу gRPC
 func getGrpcConnection() (*grpc.ClientConn, error) {
+	isFirstMessage := true
+	for len(AvailableServices) == 0 {
+		if isFirstMessage {
+			fmt.Println("Нет доступных серверов. Ждём")
+			isFirstMessage = false
+		}
+		GetAvailableServices()
+		time.Sleep(5 * time.Second)
+	}
+
 	rand.Shuffle(len(AvailableServices), func(i, j int) {
 		AvailableServices[i], AvailableServices[j] = AvailableServices[j], AvailableServices[i]
 	})
@@ -32,12 +43,13 @@ func getGrpcConnection() (*grpc.ClientConn, error) {
 	return nil, errors.New("Failed to connect to grpc server. Try again later")
 }
 
+// gRPCRegister gRPC метод - регистрация пользователя
 func gRPCRegister(username string, password string) {
 	conn, err := getGrpcConnection()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(0)
+		log.Fatalln(err)
 	}
+
 	client := backpackTaskGRPC.NewBackpackTaskClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -51,12 +63,13 @@ func gRPCRegister(username string, password string) {
 	FailOnError(err, "failed to send register request")
 
 	if answer.Code == 200 {
-		fmt.Println("Registration successful")
+		fmt.Println("Регистрация успешна")
 	} else if answer.Code == 400 {
-		fmt.Printf("User with username: %s already exists\n", username)
+		fmt.Printf("Пользователь с именем: %s уже сушествует\n", username)
 	}
 }
 
+// GetTask gRPC метод - получение задачи
 func GetTask(user User) (*backpackTaskGRPC.Task, error) {
 	conn, err := getGrpcConnection()
 	if err != nil {
@@ -75,14 +88,14 @@ func GetTask(user User) (*backpackTaskGRPC.Task, error) {
 	task, err := client.GetTask(ctx, &grpcUser)
 	if err != nil {
 		if strings.Contains(err.Error(), "wrong credentials") {
-			fmt.Println("Wrong credentials")
-			os.Exit(0)
+			log.Fatalln("Неверный логин или пароль")
 		}
 		return nil, errors.New("no available tasks")
 	}
 	return task, nil
 }
 
+// SendAnswer gRPC метод - отправка ответа
 func SendAnswer(answer *backpackTaskGRPC.TaskAnswer) error {
 	conn, err := getGrpcConnection()
 
@@ -97,11 +110,10 @@ func SendAnswer(answer *backpackTaskGRPC.TaskAnswer) error {
 	FailOnError(err, "Failed To send answer")
 
 	if response.Code == 200 {
-		fmt.Println("Solution submitted")
+		fmt.Println("Ответ принят")
 		return nil
 	} else if response.Code == 403 {
-		fmt.Println("Wrong credentials")
-		os.Exit(0)
+		log.Fatalln("Неверный логин или пароль")
 		return nil
 	} else {
 		return errors.New("cant submit task")

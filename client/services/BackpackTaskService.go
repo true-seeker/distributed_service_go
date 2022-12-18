@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// SolveBackPackTask Решение задачи о рюкзаке методом динамического программирования
 func SolveBackPackTask(task *backpackTaskGRPC.Task) uint32 {
 	fmt.Printf("Решаем задачу с ID: %d\n", task.Id)
 	startTime := time.Now()
@@ -66,5 +67,6 @@ func SolveBackPackTask(task *backpackTaskGRPC.Task) uint32 {
 	fmt.Println("Вес предметов ответа:", ansWeight)
 	fmt.Println("Ответ:", ansPrice)
 	fmt.Println("====================")
+	fmt.Println()
 	return ansPrice
 }

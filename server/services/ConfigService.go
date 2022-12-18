@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// GetProperty Получение проперти из конфига
 func GetProperty(sectionName string, keyName string) string {
 	data, _ := os.ReadFile("../config.ini")
 	cfg, _ := ini.Load(data)
