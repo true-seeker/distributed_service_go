@@ -49,7 +49,7 @@ func RegisterService() (*Service, error) {
 			Address: ip.String(),
 			Port:    servicePort,
 			Check: &consul.AgentServiceCheck{
-				HTTP:     fmt.Sprintf("http://%s:%s", ip, GetProperty("Consul", "http_check_port")),
+				HTTP:     fmt.Sprintf("http://%s:%s/healthCheck", ip, GetProperty("Consul", "http_check_port")),
 				Interval: "10s",
 			},
 		}
@@ -65,7 +65,7 @@ func RegisterService() (*Service, error) {
 	}
 
 	if len(s.RegisteredServices) == 0 {
-		FailOnError(nil, "Cant register new service")
+		FailOnError(nil, "Cant register any Consul service. Exiting")
 	}
 
 	return &s, nil

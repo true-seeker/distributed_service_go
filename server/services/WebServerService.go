@@ -2,23 +2,38 @@ package services
 
 import (
 	"fmt"
-	"io"
+	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
-func getRoot(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("got / request\n")
-	io.WriteString(w, "ok")
+func healthCheck(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
 
-func generateTaskView(w http.ResponseWriter, r *http.Request) {
-	GenerateTask(5000)
+func generateTaskView(c *gin.Context) {
+	taskSize, isFound := c.Params.Get("taskSize")
+	if isFound {
+		ts, err := strconv.Atoi(taskSize)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "taskSize must be integer"})
+			return
+		}
+		task := GenerateTask(ts)
+		c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Task with ID %d sucessfully generated", task.ID)})
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"error": "taskSize not found"})
+	return
 }
 
 func StartWebServerListener() {
-	http.HandleFunc("/", getRoot)
-	http.HandleFunc("/generateTask", generateTaskView)
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.Default()
+
+	r.GET("/healthCheck", healthCheck)
+	r.GET("/generateTask/:taskSize", generateTaskView)
 	fmt.Println("http listener started")
-	err := http.ListenAndServe(":3333", nil)
+	err := r.Run(":3333")
 	FailOnError(err, "Cant start http listener")
 }

@@ -1,11 +1,9 @@
 package services
 
-import "fmt"
-
 var TaskIterationCount = 3
 var DefaultTaskSize = 5000
 
-func GenerateTask(taskSize int) {
+func GenerateTask(taskSize int) Task {
 	db := GetDBConnection()
 	dbInstance, _ := db.conn.DB()
 	defer dbInstance.Close()
@@ -19,5 +17,5 @@ func GenerateTask(taskSize int) {
 	task := db.SaveNewTaskParts(newTask)
 	qc.PutNewTasksInQueue(task)
 
-	fmt.Printf("Generated Task with ID: %d\n", task.ID)
+	return task
 }
