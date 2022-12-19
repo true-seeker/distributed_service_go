@@ -7,13 +7,7 @@ import (
 
 // GetProperty Получение проперти из конфига
 func GetProperty(sectionName string, keyName string) string {
-	data, err := os.ReadFile("../config.ini")
-	if err != nil {
-		data, err = os.ReadFile("config.ini")
-		if err != nil {
-			FailOnError(err, "cant open config")
-		}
-	}
+	data, _ := os.ReadFile("../config.ini")
 	cfg, _ := ini.Load(data)
 
 	section, _ := cfg.GetSection(sectionName)
