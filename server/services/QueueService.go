@@ -18,6 +18,7 @@ type queueConnection struct {
 
 // GetQueueConnection Подключение к очереди
 func GetQueueConnection() *queueConnection {
+	fmt.Println(GetProperty("Queue", "user"))
 	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/",
 		GetProperty("Queue", "user"),
 		GetProperty("Queue", "password"),
